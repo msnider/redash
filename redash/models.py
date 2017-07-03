@@ -862,6 +862,17 @@ class Query(ChangeTrackingMixin, TimestampMixin, BelongsToOrgMixin, db.Model):
         return q
 
     @classmethod
+    def meta_queries(cls):
+        q = (cls.query
+            .options(joinedload(Query.user),
+                     joinedload(Query.latest_query_data).load_only('data'))
+            .join(DataSourceGroup, Query.data_source_id == DataSourceGroup.data_source_id)
+            .filter(Query.is_archived == False)
+            .filter(Query.is_draft == False)
+            .order_by(Query.created_at.desc()))
+        return q
+
+    @classmethod
     def by_user(cls, user):
         return cls.all_queries(user.group_ids, user.id).filter(Query.user == user)
 
